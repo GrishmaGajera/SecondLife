@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Second Life | Eco-Registry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+        body { font-family: 'Outfit', sans-serif; background: #fafafa; color: #1a1a1a; }
+        .submit-panel { background: #1a1a1a; color: white; }
+        .logo-small { width: 45px; height: 45px; object-fit: contain; border-radius: 8px; }
+        #login-screen { transition: opacity 0.5s ease; }
+        #login-error{
+            font-size: medium;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen" class="fixed inset-0 z-[100] bg-emerald-900 flex items-center justify-center p-6">
+        <div class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl max-w-md w-full">
+            <div class="flex flex-col items-center mb-8">
+                <img src="logo.png" alt="Logo" class="w-20 h-20 rounded-2xl mb-4 shadow-lg">
+                <h2 class="text-3xl font-bold text-gray-800">SecondLife</h2>
+                <p class="text-gray-500 text-sm">Sign in to access the SecondLife</p>
+            </div>
+            <div class="space-y-4">
+                <input id="user-input" type="text" placeholder="Username" class="w-full p-4 rounded-xl border border-gray-100 bg-gray-50 outline-none focus:ring-2 focus:ring-emerald-500">
+                <input id="pass-input" type="password" placeholder="Password" class="w-full p-4 rounded-xl border border-gray-100 bg-gray-50 outline-none focus:ring-2 focus:ring-emerald-500">
+                <button onclick="checkLogin()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-emerald-200">
+                    Enter Second Life
+                </button>
+                <p id="login-error" class="text-red-500 text-xs text-center hidden font-large">Incorrect credentials. Please try again.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-content" class="hidden">
+        <div class="flex flex-col lg:flex-row min-h-screen">
+            <aside class="lg:w-1/3 submit-panel p-8 lg:p-12 lg:fixed lg:h-full">
+                <div class="flex items-center gap-4 mb-2">
+                    <img src="logo.png" alt="Logo" class="logo-small shadow-md shadow-emerald-500/40">
+                    <h1 class="text-4xl font-bold text-white">Second<span class="text-emerald-400">Life</span></h1>
+                </div>
+                <p class="text-gray-400 mb-10 text-sm">Transforming waste into innovation.</p>
+
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2 font-semibold">Project Title</label>
+                        <input id="title" type="text" placeholder="e.g. Tire Ottoman" class="w-full bg-transparent border-b border-gray-700 py-2 outline-none focus:border-emerald-400 transition-colors text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2 font-semibold">Materials (comma separated)</label>
+                        <input id="keywords" type="text" placeholder="rubber, rope, wood" class="w-full bg-transparent border-b border-gray-700 py-2 outline-none focus:border-emerald-400 transition-colors text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2 font-semibold">Instructions</label>
+                        <textarea id="steps" rows="4" placeholder="How is it done?" class="w-full bg-transparent border-b border-gray-700 py-2 outline-none focus:border-emerald-400 transition-colors text-white"></textarea>
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <button onclick="addIdea()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-4 rounded-full transition-all transform hover:scale-105">
+                            Publish Idea
+                        </button>
+                        <button onclick="cancelInput()" class="px-6 border border-gray-700 text-gray-400 hover:text-white hover:border-white rounded-full transition-colors text-sm uppercase tracking-widest">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+                <button onclick="logout()" class="mt-12 text-gray-500 hover:text-white text-xs uppercase tracking-widest transition-colors">Logout</button>
+            </aside>
+
+            <main class="lg:w-2/3 lg:ml-[33.333%] p-8 lg:p-16">
+                <div class="max-w-2xl mx-auto">
+                    <div class="flex justify-between items-end mb-12">
+                        <h2 class="text-3xl font-bold tracking-tight text-gray-800 italic">The Innovation Gallery</h2>
+                        <div class="text-sm text-gray-500 uppercase tracking-widest font-semibold"><span id="count" class="text-emerald-600">0</span> Creations</div>
+                    </div>
+
+                    <input id="search" oninput="render()" type="text" placeholder="Search for ideas..." class="w-full mb-10 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 outline-none focus:ring-2 focus:ring-emerald-200">
+
+                    <div id="ideas-grid" class="space-y-8"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function checkLogin() {
+            const userEl = document.getElementById('user-input');
+            const passEl = document.getElementById('pass-input');
+            const errorEl = document.getElementById('login-error');
+            
+            const user = userEl.value.trim();
+            const pass = passEl.value.trim();
+
+            if (!user && !pass) {
+                errorEl.classList.remove('hidden');
+                userEl.focus();
+                return;
+            }
+
+            if (user && !pass) {
+                 errorEl.classList.remove('hidden');
+                 errorEl.innerText  = "Please enter password";
+                 passEl.focus();
+                return;
+            }
+
+            if (user === "admin" && pass === "eco2026") {
+                // alert("Welcome to Second Life");
+                sessionStorage.setItem('isLoggedIn', 'true');
+                showApp();
+            } else {
+                errorEl.classList.remove('hidden');
+                 errorEl.innerText  = "Wrong Username or Password";
+                 userEl.focus();
+            }
+        }
+
+        function showApp() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-content').classList.remove('hidden');
+            render();
+        }
+
+        function logout() {
+            sessionStorage.removeItem('isLoggedIn');
+            location.reload();
+        }
+
+        window.onload = () => {
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                showApp();
+            }
+        };
+
+        const defaultData = [
+            { title: "Self-Watering Wine Bottle Planter", keywords: ["glass", "wine bottle", "garden"], steps: "1. Carefully cut a wine bottle in half.\n2. Invert the top half into the bottom half.\n3. Add a wick through the neck and fill with soil." },
+            { title: "Old Denim Pocket Organizer", keywords: ["fabric", "denim", "office"], steps: "1. Cut pockets off old jeans.\n2. Mount them onto a wooden board or stiff fabric.\n3. Use to store pens, tools, or remotes." },
+            { title: "Tin Can Desktop Lantern", keywords: ["metal", "tin can", "decor"], steps: "1. Fill an empty tin can with water and freeze it.\n2. Use a hammer and nail to punch patterns through the ice-supported metal.\n3. Melt ice and place a tea light inside." },
+            { title: "Plastic Bottle Planter", keywords: ["plastic", "garden"], steps: "Clean the bottle. Add soil. Plant seeds." }
+        ];
+
+        let db = JSON.parse(localStorage.getItem('eco_db')) || defaultData;
+
+        function render() {
+            const grid = document.getElementById('ideas-grid');
+            if(!grid) return;
+            const search = document.getElementById('search').value.toLowerCase();
+            grid.innerHTML = '';
+
+            const filtered = db.filter(item => {
+                const titleMatch = item.title.toLowerCase().includes(search);
+                const materialMatch = item.keywords.some(k => k.toLowerCase().includes(search));
+                return titleMatch || materialMatch;
+            });
+
+            document.getElementById('count').innerText = filtered.length;
+
+            filtered.slice().reverse().forEach((item) => {
+                const actualIndex = db.findIndex(d => d.title === item.title);
+                grid.innerHTML += `
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 relative group">
+                        <button onclick="deleteIdea(${actualIndex})" class="absolute top-6 right-6 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            ${item.keywords.map(k => `<span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full uppercase tracking-tighter">${k}</span>`).join('')}
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 text-gray-800">${item.title}</h3>
+                        <p class="text-gray-600 leading-relaxed whitespace-pre-line">${item.steps}</p>
+                    </div>
+                `;
+            });
+        }
+
+        function addIdea() {
+            const titleEl = document.getElementById('title');
+            const keywordsEl = document.getElementById('keywords');
+            const stepsEl = document.getElementById('steps');
+
+            const titleVal = titleEl.value.trim();
+            const keywordsRaw = keywordsEl.value.trim();
+            const stepsVal = stepsEl.value.trim();
+
+            if (!titleVal) { alert("Please enter Title to share your idea."); titleEl.focus(); return; }
+            if (!keywordsRaw) { alert("Please enter Materials to share your idea."); keywordsEl.focus(); return; }
+            if (!stepsVal) { alert("Please enter Instructions to share your idea."); stepsEl.focus(); return; }
+
+            const exists = db.some(item => item.title.toLowerCase() === titleVal.toLowerCase());
+            if (exists) { alert("This idea already exists in the gallery!"); titleEl.focus(); return; }
+
+            const keywords = keywordsRaw.split(',').map(k => k.trim());
+            db.push({ title: titleVal, keywords, steps: stepsVal });
+            localStorage.setItem('eco_db', JSON.stringify(db));
+            cancelInput();
+            render();
+        }
+
+        function deleteIdea(index) {
+            if(confirm("Are you sure you want to erase this project?")) {
+                db.splice(index, 1);
+                localStorage.setItem('eco_db', JSON.stringify(db));
+                render();
+            }
+        }
+
+        function cancelInput() {
+            document.getElementById('title').value = '';
+            document.getElementById('keywords').value = '';
+            document.getElementById('steps').value = '';
+            document.getElementById('title').focus();
+        }
+    </script>
+</body>
+</html>
